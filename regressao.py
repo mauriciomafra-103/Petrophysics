@@ -333,34 +333,34 @@ def RegressaoFZI(dados, modelos):
         Retorna a regressão FZI para cada litofácie.
     """
 
-  lito = dados['Litofacies'].unique()
-  coef = []
+    lito = dados['Litofacies'].unique()
+    coef = []
 
-  for i in np.arange(len(lito)):
-    for j in np.arange(len(modelos)):
+    for i in np.arange(len(lito)):
+        for j in np.arange(len(modelos)):
 
-      df_dados = dados.loc[dados['Litofacies'] == dados['Litofacies'].unique()[i]].reset_index().drop('index', axis = 1)
-      rqi = df_dados['RQI_' + modelos[j]]
+        df_dados = dados.loc[dados['Litofacies'] == dados['Litofacies'].unique()[i]].reset_index().drop('index', axis = 1)
+        rqi = df_dados['RQI_' + modelos[j]]
 
-      if modelos[j] == "Gas":
-        phi = df_dados['Phi_z_Gas']
+        if modelos[j] == "Gas":
+            phi = df_dados['Phi_z_Gas']
 
-      else:
-        phi = df_dados['Phi_z_RMN']
+        else:
+            phi = df_dados['Phi_z_RMN']
 
-      dados_calculo = pd.DataFrame({'Phi': phi,
+        dados_calculo = pd.DataFrame({'Phi': phi,
                                     'RQI': rqi})
 
-      dados_calculo['const'] = 1
+        dados_calculo['const'] = 1
 
-      dados_calculo = sm.add_constant(dados_calculo)
-      atributos = dados_calculo[['const', 'Phi']]
-      rotulos = dados_calculo[['RQI']]
-      reg_ols_log = sm.OLS(rotulos, atributos, hasconst=True).fit()
-      coef.append([dados['Litofacies'].unique()[i] + '_' + modelos[j], reg_ols_log.params[0], reg_ols_log.params[1], reg_ols_log.params[0]+reg_ols_log.params[1]])
+        dados_calculo = sm.add_constant(dados_calculo)
+        atributos = dados_calculo[['const', 'Phi']]
+        rotulos = dados_calculo[['RQI']]
+        reg_ols_log = sm.OLS(rotulos, atributos, hasconst=True).fit()
+        coef.append([dados['Litofacies'].unique()[i] + '_' + modelos[j], reg_ols_log.params[0], reg_ols_log.params[1], reg_ols_log.params[0]+reg_ols_log.params[1]])
 
-  c = pd.DataFrame(coef).rename(columns={0: 'Litofacies', 1:'b', 2:'a', 3:'FZI'})
-  return c
+    c = pd.DataFrame(coef).rename(columns={0: 'Litofacies', 1:'b', 2:'a', 3:'FZI'})
+    return c
 
 
 
@@ -379,84 +379,83 @@ def RegressaoComponentesT2 (Dados, n = 0, P0 = (1, 0.1), Params_Init = [0.8, 0.0
         Retorna um DataFrame com todos os coeficientes T2 e o erro R^2.
     """
 
-  def exponential_decay(t, a, b):
-      return a * np.exp(-b * t)
+    def exponential_decay(t, a, b):
+        return a * np.exp(-b * t)
 
-  # Função do modelo exponencial multi-termo
-  def multi_exponential_decay(t, params):
-      a, b, c, d, g, h = params
-      return a * np.exp(-b * t) + c * np.exp(-d * t) + g * np.exp(-h * t)
+    # Função do modelo exponencial multi-termo
+    def multi_exponential_decay(t, params):
+        a, b, c, d, g, h = params
+        return a * np.exp(-b * t) + c * np.exp(-d * t) + g * np.exp(-h * t)
+    
+    # Função de erro (MSE)
+    def mse(params, t, y):
+        y_pred = multi_exponential_decay(t, params)
+        return np.mean((y - y_pred)**2)
+    
+    
+    time = np.array(Dados['Tempo Relaxacao'][n])  # Coloque seus valores de tempo aqui
+    A_t = np.array(Dados['Amplitude Relaxacao'][n])  # Coloque seus valores de A(t) aqui
+    
+    # Realizar o ajuste usando curve_fit
+    p0 = P0  # Valores iniciais para a e b
+    params, cov = curve_fit(exponential_decay, time, A_t, p0=p0)
+    
+    # Parâmetros ajustados
+    anmr_fit, bnmr_fit = params
+    
+    # Chute inicial para os parâmetros (a, b, c, d, g, h)
+    params_init = Params_Init
+    
+    # Minimização do erro usando minimize (Método dos mínimos quadrados)
+    result = minimize(mse, params_init, args=(time, A_t))
+    
+    # Parâmetros ajustados
+    a_fit, b_fit, c_fit, d_fit, g_fit, h_fit = result.x
+    
+    # Função para calcular as frequências esperadas
+    def expected_frequencies(params, t):
+        y_pred = multi_exponential_decay(t, params)
+        return y_pred
+    
+    # Frequências esperadas
+    expected_values = expected_frequencies(params_init, time)
+    
+    # Cálculo do qui-quadrado
+    chi_square_statistic = np.sum((A_t - expected_values)**2 / expected_values)
+    
+    # Número de graus de liberdade
+    degrees_of_freedom = len(A_t) - len(params_init)
+    
+      # Valor crítico para alpha = 0.05 (95% de confiança) e graus de liberdade
+      critical_value = chi2.ppf(0.95, degrees_of_freedom)
+    
+    # Comparação com o valor crítico
+    if chi_square_statistic <= critical_value:
+          print('O ajuste do modelo é adequado.')
+    else:
+          print('O ajuste do modelo não é adequado. Considere revisar os parâmetros iniciais.')
+    
+    coef = pd.DataFrame({'Amostra': Dados['Amostra'][n],
+                           'Amplitude Relaxacao': [A_t],
+                           'Tempo Relaxacao': [time],
+                           'A_NMR': [anmr_fit],
+                           'T2_NMR': [1/bnmr_fit]})
+    coef['A1'] = [a_fit]
+    coef['T21'] = [1/b_fit]
+    coef['A2'] = [c_fit]
+    coef['T22'] = [1/d_fit]
+    coef['A3'] = [g_fit]
+    coef['T23'] = [1/h_fit]
+    
+    ft = coef['A_NMR'][0] * np.exp((-1/coef['T2_NMR'][0]) * time)
+    f1 = coef['A1'][0] * np.exp((-1/coef['T21'][0]) * time)
+    f2 = coef['A2'][0] * np.exp((-1/coef['T22'][0]) * time)
+    f3 = coef['A3'][0] * np.exp((-1/coef['T23'][0]) * time)
+    
+    r2_ft = r2_score(A_t, ft)
+    r2_fc = r2_score(A_t, f1+f2+f3)
+    
+    coef['R2_FT'] = r2_ft
+    coef['R2_FC'] = r2_fc
 
-  # Função de erro (MSE)
-  def mse(params, t, y):
-      y_pred = multi_exponential_decay(t, params)
-      return np.mean((y - y_pred)**2)
-
-
-  time = np.array(Dados['Tempo Relaxacao'][n])  # Coloque seus valores de tempo aqui
-  A_t = np.array(Dados['Amplitude Relaxacao'][n])  # Coloque seus valores de A(t) aqui
-
-  # Realizar o ajuste usando curve_fit
-  p0 = P0  # Valores iniciais para a e b
-  params, cov = curve_fit(exponential_decay, time, A_t, p0=p0)
-
-  # Parâmetros ajustados
-  anmr_fit, bnmr_fit = params
-
-  # Chute inicial para os parâmetros (a, b, c, d, g, h)
-  params_init = Params_Init
-
-  # Minimização do erro usando minimize (Método dos mínimos quadrados)
-  result = minimize(mse, params_init, args=(time, A_t))
-
-  # Parâmetros ajustados
-  a_fit, b_fit, c_fit, d_fit, g_fit, h_fit = result.x
-
-  # Função para calcular as frequências esperadas
-  def expected_frequencies(params, t):
-      y_pred = multi_exponential_decay(t, params)
-      return y_pred
-
-  # Frequências esperadas
-  expected_values = expected_frequencies(params_init, time)
-
-  # Cálculo do qui-quadrado
-  chi_square_statistic = np.sum((A_t - expected_values)**2 / expected_values)
-
-  # Número de graus de liberdade
-  degrees_of_freedom = len(A_t) - len(params_init)
-
-  # Valor crítico para alpha = 0.05 (95% de confiança) e graus de liberdade
-  critical_value = chi2.ppf(0.95, degrees_of_freedom)
-
-  # Comparação com o valor crítico
-  if chi_square_statistic <= critical_value:
-      print('O ajuste do modelo é adequado.')
-  else:
-      print('O ajuste do modelo não é adequado. Considere revisar os parâmetros iniciais.')
-
-  coef = pd.DataFrame({'Amostra': Dados['Amostra'][n],
-                       'Amplitude Relaxacao': [A_t],
-                       'Tempo Relaxacao': [time],
-                       'A_NMR': [anmr_fit],
-                       'T2_NMR': [1/bnmr_fit]})
-  coef['A1'] = [a_fit]
-  coef['T21'] = [1/b_fit]
-  coef['A2'] = [c_fit]
-  coef['T22'] = [1/d_fit]
-  coef['A3'] = [g_fit]
-  coef['T23'] = [1/h_fit]
-
-  ft = coef['A_NMR'][0] * np.exp((-1/coef['T2_NMR'][0]) * time)
-  f1 = coef['A1'][0] * np.exp((-1/coef['T21'][0]) * time)
-  f2 = coef['A2'][0] * np.exp((-1/coef['T22'][0]) * time)
-  f3 = coef['A3'][0] * np.exp((-1/coef['T23'][0]) * time)
-
-  r2_ft = r2_score(A_t, ft)
-  r2_fc = r2_score(A_t, f1+f2+f3)
-
-  coef['R2_FT'] = r2_ft
-  coef['R2_FC'] = r2_fc
-
-
-  return coef
+    return coef
