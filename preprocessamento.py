@@ -540,3 +540,72 @@ def ProcessamentoReservatorio (Dados_com_Previsao, Modelagens = ['SDR']):
 
 
   return pd.concat([Dados_com_Previsao, df], axis = 1)
+
+
+def DadosRidgeLine(Dados, Pasta_salvamento, Nome,
+                   Distribuicao = ['T2 0.01',  'T2 0.011',  'T2 0.012',  'T2 0.014',  'T2 0.015',  'T2 0.017',  'T2 0.019',  'T2 0.021',  'T2 0.024',
+                   'T2 0.027',  'T2 0.03',  'T2 0.033',  'T2 0.037',  'T2 0.041',  'T2 0.046',  'T2 0.051',  'T2 0.057',  'T2 0.064', 
+                   'T2 0.071',  'T2 0.079',  'T2 0.088',  'T2 0.098',  'T2 0.109',  'T2 0.122',  'T2 0.136',  'T2 0.152',  'T2 0.169',
+                   'T2 0.189',  'T2 0.21',  'T2 0.234',  'T2 0.261',  'T2 0.291',  'T2 0.325',  'T2 0.362',  'T2 0.404',  'T2 0.45',
+                   'T2 0.502',  'T2 0.56',  'T2 0.624',  'T2 0.696',  'T2 0.776',  'T2 0.865',  'T2 0.964',  'T2 1.075',  'T2 1.199',
+                   'T2 1.337',  'T2 1.49',  'T2 1.661',  'T2 1.852',  'T2 2.065',  'T2 2.303',  'T2 2.567',  'T2 2.862',  'T2 3.191',  
+                   'T2 3.558',  'T2 3.967',  'T2 4.423',  'T2 4.931',  'T2 5.497',  'T2 6.129',  'T2 6.834',  'T2 7.619',  'T2 8.494', 
+                   'T2 9.471',  'T2 10.559',  'T2 11.772',  'T2 13.125',  'T2 14.634',  'T2 16.315',  'T2 18.19',  'T2 20.281',  'T2 22.612', 
+                   'T2 25.21',  'T2 28.107',  'T2 31.337',  'T2 34.939',  'T2 38.954',  'T2 43.431',  'T2 48.422',  'T2 53.986',  'T2 60.19',
+                   'T2 67.108',  'T2 74.82',  'T2 83.418',  'T2 93.004',  'T2 103.693',  'T2 115.609',  'T2 128.895',  'T2 143.708',  'T2 160.223',
+                   'T2 178.636',  'T2 199.165',  'T2 222.053',  'T2 247.572',  'T2 276.023',  'T2 307.744',  'T2 343.11',  'T2 382.54',  'T2 426.502',
+                   'T2 475.516',  'T2 530.163',  'T2 591.09',  'T2 659.019',  'T2 734.754',  'T2 819.192',  'T2 913.335',  'T2 1018.296',  'T2 1135.32',
+                   'T2 1265.792',  'T2 1411.258',  'T2 1573.441',  'T2 1754.262',  'T2 1955.864',  'T2 2180.633',  'T2 2431.234',  'T2 2710.634',  'T2 3022.143',
+                   'T2 3369.45',  'T2 3756.671',  'T2 4188.391',  'T2 4669.725',  'T2 5206.375',  'T2 5804.697',  'T2 6471.778',  'T2 7215.521',  'T2 8044.736',
+                   'T2 8969.245',  'T2 10000']):
+
+  """
+    Cria um DataFrame concatenado em uma única lista para todos os valores de tempo e da distribuição T2 para visualização da distribuição no formato RidgeLine.
+
+    Args:
+        Dados (pandas.DataFrame): DataFrame com os dados de distribuição T2 jpa formato em colunas.
+        Pasta_Salvamento (str): Diretório onde será salvo o arquivo gerado.
+        Nome (str): Nome que deseja salvar esse DataFrame.
+        Distribuicao (list): Lista das colunas da distribuição T2
+
+    Returns:
+        pandas.DataFrame: Retorna um DataFrame com os valores em lista das distribuições T2 e os tempos respectivos.
+
+  """
+
+    porosidade_i = []
+    tempo_distribuicao = []
+    for i in np.arange(len(Dados)):
+        phi_i = []
+        tempo = []
+        for j in np.arange(len(Distribuicao)):
+            phi_i.append(dados[Distribuicao[j]][i])
+            tempo.append(float(Distribuicao[j][3:]))
+        porosidade_i.append(phi_i)
+        tempo_distribuicao.append(tempo)
+    
+    Dados['Porosidade i'] = porosidade_i
+    Dados['Tempo Distribuicao'] = tempo_distribuicao
+    
+    lista_tempo = []
+    lista_amostra = []
+    lista_t2 = []
+    lista_litofacie = []
+    lista_poço = []
+    for i in np.arange(len(dados)):
+        for j in np.arange(len(Dados['Tempo Distribuicao'][0])):
+            lista_amostra.append(Dados['Amostra'][i])
+            lista_tempo.append(Dados['Tempo Distribuicao'][i][j])
+            lista_t2.append(Dados['Porosidade i'][i][j])
+            lista_litofacie.append(Dados['Categoria Litofacies'][i])
+            lista_poço.append(Dados['Poço'][i])
+
+    df = pd.DataFrame({'Amostra': lista_amostra,
+                       'Poço': lista_poço,
+                       'Tempo': lista_tempo,
+                       'T2': lista_t2,
+                       'Litofacie': lista_litofacie})
+    local_salvamento = Pasta_salvamento + 'Dados_RidgeLine_' + str(Nome) + '.xlsx'
+    df.to_excel(local_salvamento, sheet_name='Dados')                          # Salvar dataframe
+    
+    return df
