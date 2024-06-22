@@ -11,6 +11,17 @@ from sklearn.metrics import r2_score
 
 
 def RegressaoSDR (Dataframe_SDR):
+
+    """
+    A regressão dos coeficientes da modelagem SDR proposta por Kenyon et al (1988).
+
+    Args:
+        Dataframe_SDR (pandas.DataFrame): Dataframe com os dados necessários para modelagem
+
+    Returns:
+        Retorna a regressão realizada (reg_ols_log), os coeficientes da regressão (coeficientes), um dataframe com os dados previstos concatenado
+        com o DataFrame informado, e o erro sigma.
+    """
     # Regressão via OLS
     t2 = Dataframe_SDR['T2 Ponderado Log']
     phi = Dataframe_SDR['Porosidade RMN']
@@ -49,6 +60,17 @@ def RegressaoSDR (Dataframe_SDR):
     return reg_ols_log, coeficientes, pd.concat([Dataframe_SDR, dados], axis = 1), sigma
 
 def RegressaoCoates (Dataframe_Coates):
+
+    """
+    A regressão dos coeficientes da modelagem Coates proposta por Coates et al (1999).
+
+    Args:
+        Dataframe_Coates (pandas.DataFrame): Dataframe com os dados necessários para modelagem.
+
+    Returns:
+        Retorna a regressão realizada (reg_ols_log), os coeficientes da regressão (coeficientes), um dataframe com os dados previstos concatenado
+        com o DataFrame informado, e o erro sigma.
+    """
     # Regressão via OLS
     FFIBVI = Dataframe_Coates['FFI']/Dataframe_Coates['BVI']
     phi = Dataframe_Coates['Porosidade RMN']
@@ -88,6 +110,17 @@ def RegressaoCoates (Dataframe_Coates):
     return reg_ols_log, coeficientes, pd.concat([Dataframe_Coates, dados], axis = 1), sigma
 
 def RegressaoHan (Dataframe_Han):
+
+    """
+    A regressão dos coeficientes da modelagem Coates proposta por Han et al (2018).
+
+    Args:
+        Dataframe_Han (pandas.DataFrame): Dataframe com os dados necessários para modelagem.
+
+    Returns:
+        Retorna a regressão realizada (reg_novo), os coeficientes da regressão (coeficientes_novo), um dataframe com os dados previstos concatenado
+        com o DataFrame informado, e o erro sigma.
+    """
     # Regressão via OLS
     dados_calculo_log = pd.DataFrame({
     'Log k': np.log(Dataframe_Han['Permeabilidade Gas']),
@@ -143,6 +176,17 @@ def RegressaoHan (Dataframe_Han):
 
 
 def RegressaoGe (Dataframe_Ge):
+
+    """
+    A regressão dos coeficientes da modelagem Coates proposta por Ge et al (2017).
+
+    Args:
+        Dataframe_Ge (pandas.DataFrame): Dataframe com os dados necessários para modelagem.
+
+    Returns:
+        Retorna a regressão realizada (reg_novo), os coeficientes da regressão (coeficientes_novo), um dataframe com os dados previstos concatenado
+        com o DataFrame informado, e o erro sigma.
+    """
     # Regressão via OLS
     dados_calculo_log = pd.DataFrame({
     'Log k': np.log(Dataframe_Ge['Permeabilidade Gas']),
@@ -217,7 +261,20 @@ def RegressaoGe (Dataframe_Ge):
 
 
 def RegressaoRios(dados_treino, dados_teste):
-  X_treino = dados_treino[['T2 0.01',  'T2 0.011',  'T2 0.012',  'T2 0.014',  'T2 0.015',  'T2 0.017',  'T2 0.019',  'T2 0.021',  'T2 0.024',
+    
+
+    """
+    A regressão dos coeficientes da modelagem Coates proposta por Rios et al (2011).
+
+    Args:
+        dados_treino (pandas.DataFrame): Dataframe com os dados necessários para o treinamento do modelo.
+        dados_teste (pandas.DataFrame): Dataframe com os dados necessários avaliação do modelo.
+    Returns:
+        Retorna a regressão realizada (reg_novo), os coeficientes da regressão (coeficientes_novo), um dataframe com os dados previstos concatenado
+        com o DataFrame informado, e o erro sigma.
+    """
+      
+    X_treino = dados_treino[['T2 0.01',  'T2 0.011',  'T2 0.012',  'T2 0.014',  'T2 0.015',  'T2 0.017',  'T2 0.019',  'T2 0.021',  'T2 0.024',
            'T2 0.027',  'T2 0.03',  'T2 0.033',  'T2 0.037',  'T2 0.041',  'T2 0.046',  'T2 0.051',  'T2 0.057',  'T2 0.064',
            'T2 0.071',  'T2 0.079',  'T2 0.088',  'T2 0.098',  'T2 0.109',  'T2 0.122',  'T2 0.136',  'T2 0.152',  'T2 0.169',
            'T2 0.189',  'T2 0.21',  'T2 0.234',  'T2 0.261',  'T2 0.291',  'T2 0.325',  'T2 0.362',  'T2 0.404',  'T2 0.45',
@@ -232,9 +289,9 @@ def RegressaoRios(dados_treino, dados_teste):
            'T2 1265.792',  'T2 1411.258',  'T2 1573.441',  'T2 1754.262',  'T2 1955.864',  'T2 2180.633',  'T2 2431.234',  'T2 2710.634',  'T2 3022.143',
            'T2 3369.45',  'T2 3756.671',  'T2 4188.391',  'T2 4669.725',  'T2 5206.375',  'T2 5804.697',  'T2 6471.778',  'T2 7215.521',  'T2 8044.736',
            'T2 8969.245',  'T2 10000']]
-  y_treino = np.log10(dados_treino['Permeabilidade Gas']*1000)
+    y_treino = np.log10(dados_treino['Permeabilidade Gas']*1000)
 
-  X_teste = dados_teste[['T2 0.01',  'T2 0.011',  'T2 0.012',  'T2 0.014',  'T2 0.015',  'T2 0.017',  'T2 0.019',  'T2 0.021',  'T2 0.024',
+    X_teste = dados_teste[['T2 0.01',  'T2 0.011',  'T2 0.012',  'T2 0.014',  'T2 0.015',  'T2 0.017',  'T2 0.019',  'T2 0.021',  'T2 0.024',
             'T2 0.027',  'T2 0.03',  'T2 0.033',  'T2 0.037',  'T2 0.041',  'T2 0.046',  'T2 0.051',  'T2 0.057',  'T2 0.064',
             'T2 0.071',  'T2 0.079',  'T2 0.088',  'T2 0.098',  'T2 0.109',  'T2 0.122',  'T2 0.136',  'T2 0.152',  'T2 0.169',
             'T2 0.189',  'T2 0.21',  'T2 0.234',  'T2 0.261',  'T2 0.291',  'T2 0.325',  'T2 0.362',  'T2 0.404',  'T2 0.45',
@@ -249,22 +306,32 @@ def RegressaoRios(dados_treino, dados_teste):
             'T2 1265.792',  'T2 1411.258',  'T2 1573.441',  'T2 1754.262',  'T2 1955.864',  'T2 2180.633',  'T2 2431.234',  'T2 2710.634',  'T2 3022.143',
             'T2 3369.45',  'T2 3756.671',  'T2 4188.391',  'T2 4669.725',  'T2 5206.375',  'T2 5804.697',  'T2 6471.778',  'T2 7215.521',  'T2 8044.736',
             'T2 8969.245',  'T2 10000']]
-  y_teste = np.log10(dados_teste['Permeabilidade Gas']*1000)
+    y_teste = np.log10(dados_teste['Permeabilidade Gas']*1000)
 
-  pls6 = PLSRegression(n_components=6)
-  pls6.fit(X_treino, y_treino)
+    pls6 = PLSRegression(n_components=6)
+    pls6.fit(X_treino, y_treino)
   
-  y_pred_treino = pls6.predict(X_treino)
-  y_pred_teste = pls6.predict(X_teste)
+    y_pred_treino = pls6.predict(X_treino)
+    y_pred_teste = pls6.predict(X_teste)
 
 
 
-  dados_treino['Permeabilidade Prevista Rios'] = (10**y_pred_treino)/1000
-  dados_teste['Permeabilidade Prevista Rios'] = (10**y_pred_teste)/1000
+    dados_treino['Permeabilidade Prevista Rios'] = (10**y_pred_treino)/1000
+    dados_teste['Permeabilidade Prevista Rios'] = (10**y_pred_teste)/1000
 
-  return dados_treino, dados_teste
+    return dados_treino, dados_teste
 
 def RegressaoFZI(dados, modelos):
+    
+    """
+    A regressão FZI.
+
+    Args:
+        dados (pandas.DataFrame): Dataframe com os dados necessários para modelagem.
+        modelos (list): Lista com os modelos utilizados para obter o FZI.
+    Returns:
+        Retorna a regressão FZI para cada litofácie.
+    """
 
   lito = dados['Litofacies'].unique()
   coef = []
@@ -297,7 +364,20 @@ def RegressaoFZI(dados, modelos):
 
 
 
-def regressao_componentes (Dados, n = 0, P0 = (1, 0.1), Params_Init = [0.8, 0.001, 0.1, 0.01, 0.1, 0.1]):
+def RegressaoComponentesT2 (Dados, n = 0, P0 = (1, 0.1), Params_Init = [0.8, 0.001, 0.1, 0.01, 0.1, 0.1]):
+    """
+    A regressão da curva de relaxação para obter as componentes T2 de uma única .
+
+    Args:
+        Dados (pandas.DataFrame): Dataframe com os dados necessários para modelagem.
+        n (int): Indice da amostra que terá seus componentes avaliados.
+        P0 (tuple): Tupla com oa parâmetros do coeficiente T2_nmr.
+        Params_Init (list): Lista de parâmetros iniciais de cada componente T2 OBS: Caso apareça qualquer mensagem de erro ou 
+        'O ajuste do modelo não é adequado. Considere revisar os parâmetros iniciais.' mudar esses valores até que a única saida seja
+        'O ajuste do modelo é adequado.'
+    Returns:
+        Retorna um DataFrame com todos os coeficientes T2 e o erro R^2.
+    """
 
   def exponential_decay(t, a, b):
       return a * np.exp(-b * t)
