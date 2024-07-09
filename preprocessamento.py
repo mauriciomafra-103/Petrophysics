@@ -856,13 +856,13 @@ def ProcessamentoDistribuicaoTreinoTeste (Dados_Treino, Dados_Teste,
 
     """
 
-  X_treino = Dados_Treino[Valores]
-  y_treino = np.log10(Dados_Treino['Permeabilidade Gas']*1000)
-  
-  X_teste = Dados_Teste[Valores]
-  y_teste = np.log10(Dados_Teste['Permeabilidade Gas']*1000)
-  
-  return X_treino, y_treino, X_teste, y_teste
+    X_treino = Dados_Treino[Valores]
+    y_treino = np.log10(Dados_Treino['Permeabilidade Gas']*1000)
+    
+    X_teste = Dados_Teste[Valores]
+    y_teste = np.log10(Dados_Teste['Permeabilidade Gas']*1000)
+    
+    return X_treino, y_treino, X_teste, y_teste
 
 def ProcessamentoReservatorio (Dados_com_Previsao, Modelagens = ['SDR']):
 
