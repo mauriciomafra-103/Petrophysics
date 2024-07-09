@@ -127,14 +127,16 @@ def ObtencaoDadosNiumag(Diretorio_pasta, Arquivo_niumag, Inicio_conversao, Ponto
     return df
 
 
+
 def TratamentoDadosRMN(Diretorio_pasta, Arquivo_laboratorio, Dados_niumag,
                        Porosidade_i = False, T2_log = False, Componentes_t2 = False,
-                       Fator_Cimentacao = False, V_artifical = 1.3, V_geral = 2.0,
-                       Fracoes_T2Han = False, Fracoes_T2Ge = False,
-                       BVIFFI = False, Fator_Formacao = False, Litofacie = False,
+                       Fator_Cimentacao = False, V_artifical = 1.3, V_geral = 2.0, 
+                       Fracoes_T2Han = False, Fracoes_T2Ge = False, Localizacao = False,
+                       Parametros_lab = ['Permeabilidade Gas', 'Porosidade Gas', 'Porosidade RMN'],
+                       Geometria = False, EPSG = 4326, Conversao = False, N_Conversao = 32724,
+                       BVIFFI = False, Fator_Formacao = False, Litofacie = False,                       
                        Amplitude = False, Dados_porosidade_Transverso = False, N_transverso = 128):
-
-   """
+    """
     Esta função trata mescla os dados já processados de RMN (como processado pela função anterior e que tenha informações da distribuição de tamanho de poros)
     com os dados laboratoriais, que contenham dados de porosidade a gás e de RMN, permeabilidade a gas, litofácies das amostras.
 
@@ -150,6 +152,12 @@ def TratamentoDadosRMN(Diretorio_pasta, Arquivo_laboratorio, Dados_niumag,
         V_geral (int): Fator de cimentação das amostras gerais.
         Fracoes_T2Han (bool): Caso o usuário queira retornar as frações da modelagem proposta por Han et al (2018).
         Fracoes_T2Ge (bool): Caso o usuário queira retornar as frações da modelagem proposta por Ge et al (2017).
+        Localizacao (bool): Caso o usuário tenha informações sobre a localização das amostras.
+        Parametros_lab (list): Informações dos dados laboratórios que o usuário deseja compor no dataframe final.
+        Geometria (bool):  Caso o usuário queira retornar a localização em um formato geométrico.
+        EPSG (int): Sistema de coordenadas da European Petroleum Survey Group que está a geometria das amostras. Obs: O formato padrão é o WGS84.
+        Conversao (bool): Caso o usuário queira converter os o sistema de coordenadas dos dados lab em outro.
+        N_Conversao (int): Sistema de coordenadas da European Petroleum Survey Group que o usuário deseja converter a geometrias das amostras. Obs: O formato de conversão padrão é o WTF24M.
         BVIFFI (bool): Caso o usuário queira retornar as frações da modelagem proposta por Coates et al (1999).
         Fator_Formacao (bool): Caso o usuário queira obter o fator de formação.
         Litofacie (bool): Caso o usuário tenha nos dados do laboratório informações sobre as litofácies. 
@@ -163,8 +171,8 @@ def TratamentoDadosRMN(Diretorio_pasta, Arquivo_laboratorio, Dados_niumag,
     Exemplos de Uso:
         Caso o usuário tenha um arquivo .xlsx com dados de laboratório e um pandas.DataFrame com dados de Distribuição de Tamanho de Poros
         essa função retornará os dados mesclados e prontos para regressões ou visualizações no formato pandas.DataFrame.
-  """
-                         
+    """
+
     laboratorio = str(Diretorio_pasta) + str(Arquivo_laboratorio)
     dados_niumag = Dados_niumag
     dados_lab = pd.read_excel(laboratorio)
@@ -188,16 +196,34 @@ def TratamentoDadosRMN(Diretorio_pasta, Arquivo_laboratorio, Dados_niumag,
     A2 = []
     A3 = []
   
+    df = pd.concat([dados_niumag, dados_lab[Parametros_lab]], axis = 1)
+  
     if Litofacie == True:
       codi_lab = preprocessing.LabelEncoder()
       categoria_lito = codi_lab.fit_transform(dados_lab['Litofacies'])
       onehot = OneHotEncoder()
       ohe = pd.DataFrame(onehot.fit_transform(dados_lab[['Litofacies']]).toarray())
       ohe.columns = onehot.categories_
-      df = pd.concat([dados_niumag, ohe], axis = 1)
       df['Litofacies'] = dados_lab['Litofacies']
       df['Categoria Litofacie'] = categoria_lito
+      df = pd.concat([df, ohe], axis = 1)
       # Criação de colunas com valor de 0 ou 1 para cada litofácie
+    
+    if Localizacao == True:
+      df = pd.concat([df, dados_lab[['X_loc', 'Y_loc', 'Z_loc', 'Caliper']]], axis = 1)
+  
+      if Geometria == True:
+        geometria = [Point(xy) for xy in zip(dados_lab['X_loc'], dados_lab['Y_loc'])]
+        gdf = gpd.GeoDataFrame(dados_lab, geometry=geometria)
+        gdf.set_crs(epsg=EPSG, inplace=True)
+  
+        df['Geometria EPSG: ' + str(EPSG)] = gdf['geometry']
+  
+        if Conversao == True:
+          gdf_conv = gdf.to_crs(epsg=N_Conversao)
+          df['Geometria EPSG: ' + str(N_Conversao)] = gdf_conv['geometry'] 
+      # Criação da coluna com a geometria do Poço
+  
   
     if Porosidade_i == True:
       for i in np.arange(len(distribuicao_t2)):
