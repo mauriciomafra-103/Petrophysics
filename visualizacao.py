@@ -423,3 +423,58 @@ def VisualizarRidgeLinePermeabilidade(dados_totais, dados_ridge, permeabilidade_
 
         plt.savefig(f'/content/sample_data/Teste-{poço}.png', format='png', dpi = 300)
         plt.show()
+
+def VisualizarContornoSESPI(DataFrame_SESPI):
+      # Dados fornecidos
+      posicao = pd.Series(DataFrame_SESPI.drop('Time(ms)', axis = 1).columns)
+      distribuicao = pd.Series(DataFrame_SESPI['Time(ms)'])
+      z = pd.DataFrame(DataFrame_SESPI.set_index('Time(ms)')).T
+    
+      # Criação da grade de pontos
+      xi, yi = np.meshgrid(distribuicao, posicao)
+    
+      # Somatórias das colunas e linhas
+      soma_colunas = z.sum(axis=0)
+      soma_linhas= z.sum(axis=1)
+    
+      # Criação do layout com gridspec
+      soma_colunas_normalizada = soma_colunas / soma_colunas.max()
+      soma_linhas_normalizada = soma_linhas / soma_linhas.max()
+    
+      # Criação do layout com gridspec
+      fig = plt.figure(figsize=(10, 8))
+      gs = gridspec.GridSpec(2, 2, width_ratios=[3, 1], height_ratios=[1, 3], wspace=0.01, hspace=0.01)
+    
+    
+      # Gráfico de barras para a somatória das colunas
+      ax0 = plt.subplot(gs[0, 0])
+      ax0.plot(distribuicao, soma_colunas_normalizada, linestyle='-', color='skyblue')
+      ax0.set_ylabel('S(T2)')
+      ax0.set_xscale('log')
+      ax0.tick_params(axis='both', which='major', labelsize=8)
+    
+    
+      # Gráfico de barras para a somatória das linhas
+      ax1 = plt.subplot(gs[1, 1])
+      y_smooth = np.linspace(posicao.min(), posicao.max(), 1000)
+      spl = make_interp_spline(posicao, soma_linhas_normalizada, k=3)
+      row_sums_smooth = spl(y_smooth)
+      #ax1.plot(soma_linhas_normalizada, posicao, color='skyblue')
+      ax1.plot(row_sums_smooth, y_smooth, color='skyblue')  # spline suavizada
+      ax1.set_xlabel('S(Phi)')
+      ax1.tick_params(axis='both', which='major', labelsize=8)
+    
+      # Mapa de contorno
+      ax2 = plt.subplot(gs[1, 0])
+      contour = ax2.contourf(xi, yi, z, levels=20, cmap="jet")
+      ax2.set_xlabel('T2 (ms)')
+      ax2.set_ylabel('Posição (mm)')
+      ax2.set_xscale('log')
+      ax2.tick_params(axis='both', which='major', labelsize=8)
+    
+      cbar_ax = fig.add_axes([0.705, 0.69, 0.195, 0.19])  # [esquerda, bottom, width, height]
+      cbar = plt.colorbar(contour, cax=cbar_ax)
+      cbar.set_ticks([])  # Remove os ticks da barra de cores
+    
+      plt.tight_layout()
+      plt.show()
