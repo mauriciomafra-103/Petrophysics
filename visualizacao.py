@@ -116,29 +116,46 @@ def HistogramaPermeabilidade(Dados, permeabilidade):
   plt.show()
 
 
-def VisualizarDistribuicaoT2 (Dados, Pasta_Salvamento, CBW = False, Anotacao = False, Salvar = False):
+def VisualizarDistribuicaoT2 (Dados, CBW = False, Anotacao = False, Salvar = False):
 
     for i in np.arange(0, (len(Dados)-1), 2):
         amostra1 = Dados['Amostra'][i]
         amostra2 = Dados['Amostra'][i+1]
-        titulo1 = 'Curva de Distribuição T2 amostra: ' + amostra1
-        titulo2 = 'Curva de Distribuição T2 amostra: ' + amostra2
-        eixo_x = 'Tempo (ms)'
-        eixo_y = 'Amplitude do sinal'
+        titulo1 = 'Sample: ' + amostra1
+        titulo2 = 'Sample: ' + amostra2
+        eixo_x = 'Relaxation Time (ms)'
+        eixo_y = r'$\phi$ (%)'
+        xticks_list = [0.3, 1, 3, 10, 92,  300, 1000, 5000] 
+        xlim = [0.1, 10000] 
+        ylim = [0, 2]
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20,6))
 
 
         x1 = np.array(list(Dados['Tempo Distribuicao'][i]))
-        y1 = np.array(list(Dados['Porosidade i'][i]))
+        y1 = np.array(list(Dados['Porosidade_i'][i]))
         ax1.plot(x1,y1)
         ax1.set_xlabel(eixo_x)
         ax1.set_ylabel(eixo_y)
         ax1.set(title = titulo1)
         ax1.set_xscale('log')
+        ax1.set_xticks(xticks_list)
+        ax1.set_xticklabels([f"{tick}" for tick in xticks_list])
+        ax1.set_xlim(xlim)
+        ax1.set_ylim(ylim)
 
-        if CBW == True:
-            ax1.fill_between(x1, y1, where = x1 < 3.2, alpha = 0.3)
-            ax1.text(0.5,y1[30]/2, 'CBW')
+        if CBW:
+
+          # Região CBW (x < 3.2)
+          ax1.fill_between(x1, y1, where=(x1 < 3.2), alpha=0.3, color='orange')
+          ax1.text(0.5, y1[30] / 2, 'CBW', fontsize=12)
+
+          # Região CBP (3.2 ≤ x < 33)
+          ax1.fill_between(x1, y1, where=((x1 >= 3.2) & (x1 < 92)), alpha=0.3, color='yellow')
+          ax1.text(7, y1[30] / 2, 'CBP', fontsize=12)
+
+          # Região FFI (33 ≤ x ≤ 10000)
+          ax1.fill_between(x1, y1, where=((x1 >= 92) & (x1 <= 10000)), alpha=0.3, color='green')
+          ax1.text(300, y1[30] / 2, 'FFI', fontsize=12)
 
 
         if Anotacao == True:
@@ -152,12 +169,16 @@ def VisualizarDistribuicaoT2 (Dados, Pasta_Salvamento, CBW = False, Anotacao = F
 
 
         x2 = np.array(list(Dados['Tempo Distribuicao'][i+1]))
-        y2 = np.array(list(Dados['Porosidade i'][i+1]))
+        y2 = np.array(list(Dados['Porosidade_i'][i+1]))
         ax2.plot(x2, y2)
         ax2.set_xlabel(eixo_x)
         ax2.set_ylabel(eixo_y)
         ax2.set(title = titulo2)
         ax2.set_xscale('log')
+        ax2.set_xticks(xticks_list)
+        ax2.set_xticklabels([f"{tick}" for tick in xticks_list])
+        ax2.set_xlim(xlim)
+        ax2.set_ylim(ylim)
 
         if Anotacao == True:
             ax2.annotate('T2 Geométrico Niumag', xy=(Dados['T2 Geometrico Niumag'][i+1], 0.5), xycoords=("data", "axes fraction"))
@@ -168,13 +189,12 @@ def VisualizarDistribuicaoT2 (Dados, Pasta_Salvamento, CBW = False, Anotacao = F
             ax2.axvline(x=Dados['T2 Medio Niumag'][i+1], color='lightgray')
 
         if CBW == True:
-            ax2.text(0.5,y2[30]/2, 'CBW')
-            ax2.fill_between(x2, y2, where = x1 < 3, alpha = 0.3)
-
-        if Salvar == True:
-            plt.savefig(Pasta_Salvamento + amostra1 + amostra2 + '.png', format='png')                           # Salvar imagem
-
-        plt.show()
+            ax2.text(0.5,y2[30]/2, 'CBW', fontsize = 12)
+            ax2.fill_between(x2, y2, where = x1 < 3, alpha = 0.3, color = 'orange')
+            ax2.text(7,y2[30]/2, 'CBP', fontsize = 12)
+            ax2.fill_between(x2, y2, where = (x1 >= 3) & (x1 < 92), alpha = 0.3, color = 'yellow')
+            ax2.text(300,y2[30]/2, 'FFI', fontsize = 12)
+            ax2.fill_between(x2, y2, where = (x1 >= 92) & (x1 <= 10000), alpha = 0.3, color = 'green')
 
 
 
