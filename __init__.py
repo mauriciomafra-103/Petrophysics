@@ -1,4 +1,4 @@
-touch __init__.py
+__init__.py
 
 from .preprocessamento import TratamentoDadosLaboratorio
 from .regressao import RegressaoSDR
