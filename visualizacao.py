@@ -125,14 +125,14 @@ def VisualizarDistribuicaoT2 (Dados, CBW = False, Anotacao = False, Salvar = Fal
         titulo2 = 'Sample: ' + amostra2
         eixo_x = 'Relaxation Time (ms)'
         eixo_y = r'$\phi$ (%)'
-        xticks_list = [0.3, 1, 3, 10, 92,  300, 1000, 5000] 
-        xlim = [0.1, 10000] 
-        ylim = [0, 2]
+        xticks_list = [0.3, 1, 3, 10, 92,  300, 1000, 5000]
+        xlim = [0.01, 10000]
+        ylim = [0, 1]
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20,6))
 
 
         x1 = np.array(list(Dados['Tempo Distribuicao'][i]))
-        y1 = np.array(list(Dados['Porosidade_i'][i]))
+        y1 = np.array(list(Dados['Porosidade i'][i]))
         ax1.plot(x1,y1)
         ax1.set_xlabel(eixo_x)
         ax1.set_ylabel(eixo_y)
@@ -169,7 +169,7 @@ def VisualizarDistribuicaoT2 (Dados, CBW = False, Anotacao = False, Salvar = Fal
 
 
         x2 = np.array(list(Dados['Tempo Distribuicao'][i+1]))
-        y2 = np.array(list(Dados['Porosidade_i'][i+1]))
+        y2 = np.array(list(Dados['Porosidade i'][i+1]))
         ax2.plot(x2, y2)
         ax2.set_xlabel(eixo_x)
         ax2.set_ylabel(eixo_y)
